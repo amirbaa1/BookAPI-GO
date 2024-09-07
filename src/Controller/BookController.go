@@ -32,6 +32,8 @@ func GetBooksByAuthor(c *fiber.Ctx) error {
 	}
 
 	log.Println(requestAuthor.Author)
+	//log.Println(requestAuthor.Author.FirstName)
+	//log.Println(requestAuthor.Author.LastName)
 
 	if err := c.BodyParser(&requestAuthor); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -53,7 +55,7 @@ func GetBooksByAuthor(c *fiber.Ctx) error {
 				})
 			}
 		} else if requestAuthor.Author.FirstName != "" {
-			err := db.Where("first_name = ?", requestAuthor.Author.FirstName).Find(&listAuthor).Error
+			err := db.Where("LOWER(first_name) = LOWER(?)", requestAuthor.Author.FirstName).Find(&listAuthor).Error
 
 			if err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -115,7 +117,8 @@ func CreateBook(c *fiber.Ctx) error {
 
 	if err := c.BodyParser(&requestDataBook); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"statusCode": fiber.StatusBadRequest,
+			"error":      err.Error(),
 		})
 	}
 
@@ -163,5 +166,57 @@ func CreateBook(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"statusCode": fiber.StatusCreated,
 		"message":    "Book created successfully",
+	})
+
+}
+
+func GetBookById(c *fiber.Ctx) error {
+	db := Config.GetDB()
+	var book []Model.Book
+	result := db.Where("id = ?", c.Params("id")).Find(&book)
+	if result.Error != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"statusCode": fiber.StatusInternalServerError,
+			"error":      result.Error.Error(),
+		})
+	}
+	return c.JSON(fiber.Map{
+		"statusCode": fiber.StatusOK,
+		"message":    "Book successfully retrieved",
+		"book":       book,
+	})
+}
+
+func GetBookByTitle(c *fiber.Ctx) error {
+	db := Config.GetDB()
+	var book []Model.Book
+	result := db.Where("title = ?", c.Params("title")).Find(&book)
+	if result.Error != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"statusCode": fiber.StatusInternalServerError,
+			"error":      result.Error.Error(),
+		})
+	}
+	return c.JSON(fiber.Map{
+		"statusCode": fiber.StatusOK,
+		"message":    "Book successfully retrieved",
+		"book":       book,
+	})
+}
+
+func GetBookByPublisher(c *fiber.Ctx) error {
+	db := Config.GetDB()
+	var book []Model.Book
+	result := db.Where("publisher= ?", c.Params("publisher")).Find(&book)
+	if result.Error != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"statusCode": fiber.StatusInternalServerError,
+			"error":      result.Error.Error(),
+		})
+	}
+	return c.JSON(fiber.Map{
+		"statusCode": fiber.StatusOK,
+		"message":    "Book successfully retrieved",
+		"book":       book,
 	})
 }
